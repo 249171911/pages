@@ -1,0 +1,822 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>小红书评论区回复小工具 · 最终完整版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      margin: 0;
+      padding: 24px;
+      line-height: 1.6;
+      background: #f5f5f7;
+    }
+    h1 { font-size: 22px; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #777; margin-bottom: 18px; }
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      max-width: 960px;
+      margin: 0 auto 16px;
+    }
+    label { font-size: 13px; font-weight: 500; display: block; margin-bottom: 6px; }
+    textarea, select, input[type="text"] {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      padding: 8px 10px;
+      font-size: 13px;
+      resize: vertical;
+      min-height: 60px;
+      outline: none;
+      background: #fafafa;
+    }
+    textarea:focus, select:focus, input[type="text"]:focus {
+      border-color: #ff2442;
+      background: #fff;
+      box-shadow: 0 0 0 1px rgba(255,36,66,0.08);
+    }
+    select { min-height: auto; height: 34px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .col-6 { flex: 1 1 260px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      border: 1px solid #eee;
+      padding: 4px 10px;
+      font-size: 12px;
+      background: #fafafa;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip input { margin: 0; }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #ff2442;
+      color: #fff;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    button:active { transform: translateY(1px); }
+    .btn-secondary { background: #e5e7eb; color: #111827; }
+    .btn-ghost { background: #f3f4f6; color: #374151; }
+    .btn-mini {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      color: #374151;
+      margin-top: 0;
+    }
+    .btn-mini + .btn-mini { margin-left: 4px; }
+    .outputs { margin-top: 4px; }
+    .reply-item {
+      border-radius: 10px;
+      border: 1px solid #eee;
+      padding: 10px 10px 8px;
+      margin-bottom: 10px;
+      background: #fdfdfd;
+      font-size: 13px;
+      position: relative;
+    }
+    .reply-label {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      font-size: 11px;
+      color: #999;
+    }
+    .reply-actions {
+      margin-top: 6px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .small { font-size: 12px; color: #888; margin-top: 2px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4f46e5;
+      font-size: 11px;
+      margin-left: 6px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      color: #4b5563;
+      margin-right: 4px;
+      margin-top: 4px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    .switch-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .switch-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #4b5563;
+      cursor: pointer;
+    }
+    .switch-label input {
+      width: 14px;
+      height: 14px;
+    }
+    .favorites-list {
+      margin-top: 6px;
+      border-top: 1px dashed #e5e7eb;
+      padding-top: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .favorite-item {
+      font-size: 12px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+    .favorite-item:hover {
+      background: #f3f4f6;
+    }
+    .favorite-meta {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+    details summary {
+      font-size: 12px;
+      color: #4b5563;
+      cursor: pointer;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::before {
+      content: "▶";
+      display: inline-block;
+      font-size: 10px;
+      margin-right: 4px;
+      transform: translateY(-1px);
+    }
+    details[open] summary::before { content: "▼"; }
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .card { padding: 14px 14px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>小红书评论区回复小工具 · 最终完整版 <span class="badge">学习 + 多条生成 + 收藏</span></h1>
+    <div class="subtitle">
+      输入评论 → 选语气和长度 → 一键生成多条候选；还能记住你的回复风格，下次自动套用。
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label for="noteContext">笔记背景 / 产品信息（可选）</label>
+      <textarea id="noteContext" placeholder="例如：大宝早C晚A，主打便宜好用、适合熬夜脸去黄，整体是素人体验分享。"></textarea>
+    </div>
+
+    <div style="margin-bottom: 12px;">
+      <label for="commentText">粉丝评论原文（必填）</label>
+      <textarea id="commentText" placeholder="把粉丝评论原封不动贴过来，例如：‘敏感肌能用吗？’"></textarea>
+    </div>
+
+    <div class="row" style="margin-bottom: 8px;">
+      <div class="col-6">
+        <label for="tone">回复语气</label>
+        <select id="tone">
+          <option value="natural">素人自然</option>
+          <option value="xiangcai">香菜式（轻松好笑）</option>
+          <option value="warm">走心安慰 / 共情</option>
+          <option value="pro">稍微专业一点</option>
+          <option value="seller">品牌方 / 商务口吻</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <label for="length">回复长度</label>
+        <select id="length">
+          <option value="normal">正常一句半～两句</option>
+          <option value="short">稍微短一点（适合随手回）</option>
+          <option value="one">一句话搞定</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">快捷预设</div>
+    <div style="margin-bottom: 6px;">
+      <button type="button" class="btn-mini" onclick="applyPreset('casual')">随手po：素人 + 短 + 5 条</button>
+      <button type="button" class="btn-mini" onclick="applyPreset('xiangcai')">香菜式调侃：香菜 + 短 + 10 条</button>
+      <button type="button" class="btn-mini" onclick="applyPreset('warm')">安慰型：走心 + 正常 + 5 条</button>
+      <button type="button" class="btn-mini" onclick="applyPreset('seller')">商务合作：品牌方 + 正常 + 3 条</button>
+    </div>
+
+    <div class="row" style="margin-bottom: 8px;">
+      <div class="col-6">
+        <label for="keyInfo">想带进回复里的关键信息（选填）</label>
+        <input id="keyInfo" type="text" placeholder="例如：适合干皮；有礼盒；现在有活动；不含酒精等…" />
+      </div>
+      <div class="col-6">
+        <label>评论类型标签（可多选）</label>
+        <div class="chips">
+          <label class="chip">
+            <input type="checkbox" value="sensitive" class="tag"> 敏感肌 / 烂脸担心
+          </label>
+          <label class="chip">
+            <input type="checkbox" value="effect" class="tag"> 有效吗 / 玄学质疑
+          </label>
+          <label class="chip">
+            <input type="checkbox" value="price" class="tag"> 太贵 / 觉得消费高
+          </label>
+          <label class="chip">
+            <input type="checkbox" value="ad" class="tag"> 这是广告吧
+          </label>
+          <label class="chip">
+            <input type="checkbox" value="repeat" class="tag"> 求用法 / 频率
+          </label>
+          <label class="chip">
+            <input type="checkbox" value="follow" class="tag"> 说要跟买 / 表白你
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="small" style="margin-top:-4px;margin-bottom:8px;">
+      只选和这条评论最相关的 1–3 个就行，不选也可以。
+    </div>
+
+    <details style="margin-bottom: 10px;">
+      <summary>高级开关（可选）</summary>
+      <div class="switch-row">
+        <label class="switch-label">
+          <input type="checkbox" id="switchOpeners" checked />
+          开头加一小句过渡（比如“我自己的感觉是”）
+        </label>
+        <label class="switch-label">
+          <input type="checkbox" id="switchClosers" checked />
+          结尾加一句小结 / 提醒
+        </label>
+        <label class="switch-label">
+          <input type="checkbox" id="switchSoften" checked />
+          语气稍微柔一点（多用“建议”“可以先…”）
+        </label>
+      </div>
+    </details>
+
+    <div class="section-title">示例学习区</div>
+    <div style="margin-bottom: 4px;">
+      <label for="examples">你的示例回复（可选，让工具“学你”）</label>
+      <textarea id="examples" placeholder="一行一条示例，推荐格式：评论关键词||你会怎么回
+例如：
+敏感肌能用吗||可以的～我自己偶尔敏感也在用，建议你先少量试试，没不适再加量哈
+广告吧||哈哈是合作没错，但是真实使用感我都会写清楚，夸过头我也怕翻车…"></textarea>
+      <div class="small">
+        点“学习当前示例”后，这些示例会保存到本地浏览器，下次打开还在。匹配到关键词时会优先用你的回复，并在此基础上做轻微变体。
+      </div>
+    </div>
+
+    <div style="margin-bottom: 8px;">
+      <button id="learnBtn" class="btn-ghost" type="button">学习当前示例</button>
+      <span class="small" id="learnStatus" style="margin-left:6px;color:#6b7280;">尚未学习示例</span>
+    </div>
+
+    <div class="row" style="margin-bottom: 4px;">
+      <div class="col-6">
+        <label for="replyCount">每次生成的回复数量</label>
+        <select id="replyCount">
+          <option value="3">3 条</option>
+          <option value="5">5 条</option>
+          <option value="10" selected>10 条</option>
+        </select>
+      </div>
+      <div class="col-6">
+        <span class="section-title">当前配置</span>
+        <div id="currentConfig" class="small"></div>
+      </div>
+    </div>
+
+    <button id="generateBtn" type="button">生成回复</button>
+    <button id="clearBtn" class="btn-secondary" type="button">清空</button>
+
+    <div class="outputs" id="outputs"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">收藏的万能回复（你平时最常用的几句可以存这里，随时一键复制）</div>
+    <div class="small">点“收藏”后会出现在下面，点击即可复制，适合那种你经常要复用的标准回复。</div>
+    <div id="favoritesContainer" class="favorites-list"></div>
+  </div>
+
+  <script>
+    const STORAGE_EXAMPLES_KEY = "xhs_reply_examples_full_final";
+    const STORAGE_FAVS_KEY = "xhs_reply_favorites_full_final";
+
+    function pick(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    const baseOpeners = {
+      natural: [
+        "可以的～",
+        "这个我也挺在意的，说下我的使用感哈：",
+        "我自己的感觉是：",
+        "我这段时间的体验是："
+      ],
+      xiangcai: [
+        "姐妹你这问题问到点子上了：",
+        "笑死，这个我太有发言权了：",
+        "先让我深呼吸一下再回答你：",
+        "这块我可以拍着胸脯说两句："
+      ],
+      warm: [
+        "能理解你这个担心。",
+        "我完全懂你说的这种感觉。",
+        "先抱抱你。",
+        "我之前也被这个问题困扰过。"
+      ],
+      pro: [
+        "简单说下我的理解哈：",
+        "从成分和使用感两个方面说一下：",
+        "客观一点讲：",
+        "总结下来大概就是："
+      ],
+      seller: [
+        "这个问题真的很多姐妹都会问：",
+        "谢谢你认真看完来问～",
+        "补充说明一下哈：",
+        "可以跟你详细说一下："
+      ]
+    };
+
+    const tagSnippets = {
+      sensitive: [
+        "我自己是偶尔会敏感的那种，用之前有先在耳后试了几天没问题才正式上脸，全程没有刺痛、爆红这种反应。",
+        "敏感肌的话，建议先少量、低频试用，比如一周2次，慢慢建立耐受，我这种容易敏感的皮也可以稳定用下来。",
+        "如果你是特别爱泛红那种，前期可以先局部试，比如只涂脸颊边缘，观察几天没问题再加量。"
+      ],
+      effect: [
+        "一开始确实不要期待一天变天，正常都是先从“没那么暗沉”“粗糙感变轻”这种小变化开始。",
+        "我是连用大概一两周开始感觉到肤色均匀一点，坚持一个月才明显觉得整体提亮、细纹淡一点。",
+        "这种护肤品更多还是慢慢调理皮肤状态，跟打针那种立竿见影不一样。"
+      ],
+      price: [
+        "我也不太敢乱买贵的，所以当时就是图性价比选了这个，用下来觉得以这个价格做到这种效果已经很可以了。",
+        "如果预算有限，我会优先考虑这类带美白/功效备案、价格又比较友好的，空瓶也没那么肉疼。",
+        "我一般是等有活动时候囤，用下来觉得性价比还挺高的。"
+      ],
+      ad: [
+        "我自己是先买来当普通护肤用的，是真用了一段时间觉得还行才愿意写这么长一篇。",
+        "确实是合作，但是内容是我根据自己这段时间的真实使用感写的，效果不好我也不敢这么明着夸。",
+        "有没有合作我都会讲真实感受，毕竟这东西大家一用就知道，夸过头反而容易翻车。"
+      ],
+      repeat: [
+        "我自己的节奏是白天只用薄薄一层，晚上会稍微厚一点做一个加强，整体就是早C晚A这种思路。",
+        "一般我会控制在一周 3–4 次，看皮肤状态好不好，状态不稳的时候适当减频率。",
+        "可以先按官方建议的频率来，如果皮肤状态OK，再慢慢根据自己的耐受加频率。"
+      ],
+      follow: [
+        "你要是跟买了记得回来跟我报个到，我真的很好奇每个人的使用感。",
+        "太可爱了，你用完有感觉的话一定要来评论区跟我分享一下。",
+        "有用的话记得回来夸我一下，不好用也可以来提醒我，咱们就真实一点。"
+      ]
+    };
+
+    const closers = {
+      natural: [
+        "总之还是看你当下皮肤状态，稳一点再上会更安心。",
+        "你要是很纠结可以先少量试一小段时间，感觉OK再用满量。",
+        "反正护肤这件事还是别着急，慢慢试出最适合自己的就好。"
+      ],
+      xiangcai: [
+        "总之就是：别一次性手重，慢慢来，皮肤会感谢你的。",
+        "护肤这事就图个长期稳定，别想着一夜变天，容易翻车。",
+        "你如果跟买了，算是我们一起体验了。"
+      ],
+      warm: [
+        "希望你也慢慢找到适合自己的节奏，不用再那么紧张皮肤。",
+        "有不放心的地方你随时在评论区问我，我能回答的都会认真回你。",
+        "你慢慢来就好，不用给自己太大压力。"
+      ],
+      pro: [
+        "如果你本身有皮肤疾病，建议还是先问下医生再上会更放心。",
+        "总之按耐受、循序渐进，是相对安全的用法。",
+        "关键还是看自己的肤质和当下状态，感觉不对马上停用就好。"
+      ],
+      seller: [
+        "有任何使用上的问题都可以再来问我，我会尽量一条条看。",
+        "后面用下来有什么感受也欢迎回来跟我分享。",
+        "如果后续有新的使用小技巧我也会再更新在笔记里。"
+      ]
+    };
+
+    function parseExamples(rawText) {
+      if (!rawText.trim()) return [];
+      const lines = rawText.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      return lines.map(line => {
+        const parts = line.split("||");
+        return {
+          pattern: (parts[0] || "").trim(),
+          reply: (parts[1] || parts[0] || "").trim()
+        };
+      }).filter(e => e.reply);
+    }
+
+    function loadStoredExamples() {
+      try {
+        const raw = localStorage.getItem(STORAGE_EXAMPLES_KEY);
+        if (!raw) return [];
+        return JSON.parse(raw) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveStoredExamples(examples) {
+      try {
+        localStorage.setItem(STORAGE_EXAMPLES_KEY, JSON.stringify(examples));
+      } catch (e) {
+        console.warn("无法保存示例到本地存储", e);
+      }
+    }
+
+    function loadFavorites() {
+      try {
+        const raw = localStorage.getItem(STORAGE_FAVS_KEY);
+        if (!raw) return [];
+        return JSON.parse(raw) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveFavorites(favs) {
+      try {
+        localStorage.setItem(STORAGE_FAVS_KEY, JSON.stringify(favs));
+      } catch (e) {
+        console.warn("无法保存收藏到本地存储", e);
+      }
+    }
+
+    function applyLengthControl(text, lengthMode) {
+      let t = text.replace(/\s+/g, " ").trim();
+      if (!t) return t;
+
+      if (lengthMode === "short") {
+        if (t.length > 60) {
+          t = t.slice(0, 60) + "…";
+        }
+      } else if (lengthMode === "one") {
+        const segs = t.split(/[。！？!?\n]/);
+        if (segs[0]) {
+          t = segs[0].trim();
+          if (!/[。.!?！？]$/.test(t)) t += "。";
+        }
+      }
+      return t;
+    }
+
+    function slightVariant(base) {
+      let t = base.trim();
+      if (t.length < 10) return t;
+      const tweaks = ["～", "哈", "啦", "呢", ""];
+      const add = pick(tweaks);
+      if (add && !t.endsWith(add)) {
+        t = t.replace(/。?$/, "") + add;
+      }
+      return t;
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      try {
+        document.execCommand("copy");
+      } catch (e) {}
+      document.body.removeChild(temp);
+    }
+
+    function applyPreset(type) {
+      const toneEl = document.getElementById("tone");
+      const lengthEl = document.getElementById("length");
+      const countEl = document.getElementById("replyCount");
+
+      if (type === "casual") {
+        toneEl.value = "natural";
+        lengthEl.value = "short";
+        countEl.value = "5";
+      } else if (type === "xiangcai") {
+        toneEl.value = "xiangcai";
+        lengthEl.value = "short";
+        countEl.value = "10";
+      } else if (type === "warm") {
+        toneEl.value = "warm";
+        lengthEl.value = "normal";
+        countEl.value = "5";
+      } else if (type === "seller") {
+        toneEl.value = "seller";
+        lengthEl.value = "normal";
+        countEl.value = "3";
+      }
+      updateConfigDisplay();
+    }
+
+    function updateConfigDisplay() {
+      const tone = document.getElementById("tone").value;
+      const lengthMode = document.getElementById("length").value;
+      const count = document.getElementById("replyCount").value;
+      const openers = document.getElementById("switchOpeners").checked;
+      const closers = document.getElementById("switchClosers").checked;
+      const soften = document.getElementById("switchSoften").checked;
+      const mapTone = {
+        natural: "素人",
+        xiangcai: "香菜式",
+        warm: "走心",
+        pro: "稍专业",
+        seller: "品牌方"
+      };
+      const mapLen = {
+        normal: "正常",
+        short: "短一点",
+        one: "一句话"
+      };
+      let pills = [];
+      pills.push("语气：" + (mapTone[tone] || tone));
+      pills.push("长度：" + (mapLen[lengthMode] || lengthMode));
+      pills.push("数量：" + count + " 条");
+      if (openers) pills.push("有开头过渡");
+      if (closers) pills.push("有结尾小结");
+      if (soften) pills.push("语气偏柔和");
+      document.getElementById("currentConfig").innerHTML =
+        pills.map(p => '<span class="pill">' + p + "</span>").join(" ");
+    }
+
+    function buildReplies() {
+      const noteContext = document.getElementById("noteContext").value.trim();
+      const commentText = document.getElementById("commentText").value.trim();
+      const tone = document.getElementById("tone").value;
+      const lengthMode = document.getElementById("length").value;
+      const keyInfo = document.getElementById("keyInfo").value.trim();
+      const examplesText = document.getElementById("examples").value;
+      const outputs = document.getElementById("outputs");
+      const replyCount = parseInt(document.getElementById("replyCount").value, 10) || 3;
+      const useOpeners = document.getElementById("switchOpeners").checked;
+      const useClosers = document.getElementById("switchClosers").checked;
+      const soften = document.getElementById("switchSoften").checked;
+
+      if (!commentText) {
+        alert("请先填写粉丝评论原文。");
+        return;
+      }
+
+      const selectedTags = Array.from(document.querySelectorAll(".tag:checked")).map(t => t.value);
+      const examples = parseExamples(examplesText);
+      const storedExamples = loadStoredExamples();
+      const allExamples = [...storedExamples, ...examples];
+      const commentLower = commentText.toLowerCase();
+
+      outputs.innerHTML = "";
+
+      for (let i = 0; i < replyCount; i++) {
+        let reply = "";
+
+        let matchedExample = null;
+        if (allExamples.length) {
+          for (const ex of allExamples) {
+            if (!ex.pattern || commentText.includes(ex.pattern)) {
+              matchedExample = ex;
+              break;
+            }
+          }
+        }
+
+        if (matchedExample) {
+          reply = slightVariant(matchedExample.reply);
+        } else {
+          let parts = [];
+
+          if (useOpeners) {
+            const opener = pick(baseOpeners[tone]);
+            if (opener && lengthMode !== "one") parts.push(opener);
+          }
+
+          if (commentLower.includes("敏感") || commentLower.includes("烂脸")) {
+            parts.push("我看到你提到敏感这一块，我当时也挺怕翻车的。");
+          } else if (commentLower.includes("贵") || commentLower.includes("价格")) {
+            parts.push("价格这块我也纠结过一阵。");
+          } else if (commentLower.includes("广告") || commentLower.includes("恰饭")) {
+            parts.push("说实话现在大家都对广告挺敏感的。");
+          } else if (commentLower.includes("能用吗") || commentLower.includes("好用吗")) {
+            parts.push("直接说我的真实感受：");
+          }
+
+          selectedTags.forEach(tag => {
+            const snip = pick(tagSnippets[tag] || []);
+            if (snip) parts.push(snip);
+          });
+
+          if (keyInfo) {
+            if (tone === "pro" || tone === "seller") {
+              parts.push("另外补充一点：" + keyInfo + "。");
+            } else {
+              parts.push("顺便说一句，" + keyInfo + "。");
+            }
+          }
+
+          if (noteContext && Math.random() < 0.4 && lengthMode === "normal") {
+            parts.push("我这篇笔记里主要也是按这个思路来的：" + noteContext.replace(/[\r\n]+/g, " ").slice(0, 60) + "…");
+          }
+
+          if (useClosers && lengthMode === "normal") {
+            const closer = pick(closers[tone]);
+            if (closer) parts.push(closer);
+          }
+
+          reply = parts.join(" ");
+
+          if (soften) {
+            reply = reply
+              .replace(/必须/g, "可以")
+              .replace(/一定要/g, "建议可以")
+              .replace(/不要/g, "尽量不要");
+          }
+        }
+
+        reply = applyLengthControl(reply, lengthMode);
+
+        const div = document.createElement("div");
+        div.className = "reply-item";
+        const label = document.createElement("div");
+        label.className = "reply-label";
+        label.textContent = "回复建议 " + (i + 1);
+        const p = document.createElement("div");
+        p.textContent = reply;
+
+        const actions = document.createElement("div");
+        actions.className = "reply-actions";
+        const btnCopy = document.createElement("button");
+        btnCopy.type = "button";
+        btnCopy.className = "btn-mini";
+        btnCopy.textContent = "复制";
+        btnCopy.onclick = function () {
+          copyToClipboard(reply);
+        };
+        const btnFav = document.createElement("button");
+        btnFav.type = "button";
+        btnFav.className = "btn-mini";
+        btnFav.textContent = "收藏";
+        btnFav.onclick = function () {
+          addFavorite(reply);
+        };
+        actions.appendChild(btnCopy);
+        actions.appendChild(btnFav);
+
+        div.appendChild(label);
+        div.appendChild(p);
+        div.appendChild(actions);
+        outputs.appendChild(div);
+      }
+    }
+
+    function learnExamples() {
+      const examplesText = document.getElementById("examples").value;
+      const status = document.getElementById("learnStatus");
+      const parsed = parseExamples(examplesText);
+      if (!parsed.length) {
+        status.textContent = "没有识别到示例，确认一下格式：关键词||回复内容";
+        status.style.color = "#b91c1c";
+        return;
+      }
+      const existing = loadStoredExamples();
+      const merged = [...existing];
+
+      parsed.forEach(p => {
+        const idx = merged.findIndex(m => m.pattern === p.pattern);
+        if (idx >= 0) {
+          merged[idx] = p;
+        } else {
+          merged.push(p);
+        }
+      });
+
+      saveStoredExamples(merged);
+      status.textContent = "已学习 " + parsed.length + " 条示例（累计 " + merged.length + " 条）";
+      status.style.color = "#059669";
+    }
+
+    function renderFavorites() {
+      const container = document.getElementById("favoritesContainer");
+      const favs = loadFavorites();
+      container.innerHTML = "";
+      if (!favs.length) {
+        container.innerHTML = '<div class="small" style="color:#9ca3af;">暂时还没有收藏，可以在上面的回复里点“收藏”。</div>';
+        return;
+      }
+      favs.forEach((item, idx) => {
+        const div = document.createElement("div");
+        div.className = "favorite-item";
+        div.onclick = function () {
+          copyToClipboard(item.text);
+        };
+        const main = document.createElement("div");
+        main.textContent = item.text;
+        const meta = document.createElement("div");
+        meta.className = "favorite-meta";
+        meta.textContent = (item.commentKeyword ? ("关键词：" + item.commentKeyword + " · ") : "") + "点击即可复制";
+        div.appendChild(main);
+        div.appendChild(meta);
+        container.appendChild(div);
+      });
+    }
+
+    function addFavorite(text) {
+      const favs = loadFavorites();
+      const commentText = document.getElementById("commentText").value.trim();
+      const keyword = commentText.slice(0, 12);
+      favs.unshift({
+        text,
+        commentKeyword: keyword
+      });
+      const trimmed = favs.slice(0, 50);
+      saveFavorites(trimmed);
+      renderFavorites();
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", buildReplies);
+    document.getElementById("clearBtn").addEventListener("click", function () {
+      document.getElementById("noteContext").value = "";
+      document.getElementById("commentText").value = "";
+      document.getElementById("keyInfo").value = "";
+      document.getElementById("examples").value = "";
+      document.querySelectorAll(".tag").forEach(t => t.checked = false);
+      document.getElementById("outputs").innerHTML = "";
+    });
+    document.getElementById("learnBtn").addEventListener("click", learnExamples);
+    document.getElementById("tone").addEventListener("change", updateConfigDisplay);
+    document.getElementById("length").addEventListener("change", updateConfigDisplay);
+    document.getElementById("replyCount").addEventListener("change", updateConfigDisplay);
+    document.getElementById("switchOpeners").addEventListener("change", updateConfigDisplay);
+    document.getElementById("switchClosers").addEventListener("change", updateConfigDisplay);
+    document.getElementById("switchSoften").addEventListener("change", updateConfigDisplay);
+
+    (function init() {
+      const status = document.getElementById("learnStatus");
+      const stored = loadStoredExamples();
+      if (stored.length) {
+        status.textContent = "已记住 " + stored.length + " 条示例";
+        status.style.color = "#059669";
+      }
+      updateConfigDisplay();
+      renderFavorites();
+    })();
+  </script>
+</body>
+</html>
